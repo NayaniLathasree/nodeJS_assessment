@@ -1,0 +1,60 @@
+                             +-----------------+
+                             |     carriers     |
+                             |-----------------|
+                             | _id             |
+                             | name            |
+                             | contactEmail    |
+                             +-----------------+
+                                    ▲
+                                    |
+                                    |
+                             +-----------------+
+                             |     policies     |
+                             |-----------------|
+                             | _id             |
+                             | policyNumber    |
+                             | userId          |────────────┐
+                             | userAccountId   |            │
+                             | agentId         |            │
+                             | carrierId       |────────────┘
+                             | lobId           |───────────────┐
+                             | startDate       |               │
+                             | endDate         |               │
+                             | premiumAmount   |               │
+                             | status          |               │
+                             +-----------------+               │
+                                    ▲                         ▲
+                                    │                         │
+                 ┌──────────────────┘                         │
+                 │                                            │
+         +---------------+                            +---------------+
+         |    users       |                            |     lobs      |
+         |---------------|                            |---------------|
+         | _id           |                            | _id           |
+         | firstName     |                            | name          |
+         | lastName      |                            | description   |
+         | email         |                            +---------------+
+         | gender        |
+         | phoneNumber   |
+         +---------------+
+                 ▲
+                 │
+        +------------------+
+        |  useraccounts     |
+        |------------------|
+        | _id              |
+        | userId           |
+        | accountType      |
+        | accountNumber    |
+        +------------------+
+
+                 ▲
+                 │
+         +---------------+
+         |    agents      |
+         |---------------|
+         | _id           |
+         | name          |
+         | email         |
+         | phoneNumber   |
+         +---------------+

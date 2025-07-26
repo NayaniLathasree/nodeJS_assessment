@@ -1,0 +1,54 @@
+npm i 
+nodemon app.js
+
+Task 1
+1.Create an API  to upload the attached XLSX/CSV data into MongoDB. (Please accomplish this using worker threads)
+  Endpoint : POST /api/file/upload
+  cURL : 
+   curl --location 'http://localhost:8000/api/file/upload' \
+    --form 'file=@"/C:/Users/Divyasree/Downloads/data-sheet - Node js Assesment (2) (1).csv"'
+  Description
+   * Uploads .csv or .xlsx file.
+   * Uses worker_threads to parse and insert data asynchronously into collections: Agent, User, UserAccount, LOB, Carrier, Policy.
+
+2. Search API to find policy info with the help of the username.
+    Endpoint: GET /api/policy/search?username=Lura%20Lucca
+    cURL 
+        curl --location 'http://localhost:8000/api/policy/search?username=Lura%20Lucca'
+    Description:
+        * Searches policy collection by username.
+3. API to provide aggregated policy by each user.
+    Endpoint :GET /api/policy/user
+    cURL :  curl --location 'http://localhost:8000/api/policy/user'
+
+4. Consider each info as a different collection in MongoDB (Agent, User, User's Account, LOB, Carrier, Policy).
+    * Refer taskOne - > Collection.txt file for more details
+
+
+Task 2:
+
+1. Track real-time CPU utilization of the node server and on 70% usage restart the server.
+   * Install PM2 globally
+   * Start your Node.js server with PM2 and set a CPU threshold
+      pm2 start app.js -f
+   * Custom CPU Monitor Script + PM2 Integration
+     If you want to monitor CPU usage every few seconds and restart the app manually when it crosses 70%, follow this:
+     Run the monitor with PM2
+     pm2 start cpuMonitor.js
+     Monitor logs 
+     pm2 logs cpu-monitor
+
+2. Create a post-service that takes the message, day, and time in body parameters and it inserts that message into DB at that particular day and time.
+    Endpoint : POST /api/schedule/message
+    cURL : 
+    curl --location 'http://localhost:8000/api/schedule/message' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "message": "Meeting with team",
+    "day": "Friday",
+    "time": "15:30"
+    }'
+    Description : 
+    * Takes a message with a day (e.g. Monday, Friday) and time (HH:mm).
+    * Stores it in DB.
+    * Scheduled task (via node-cron or custom logic) checks DB and triggers the message at the right time.
