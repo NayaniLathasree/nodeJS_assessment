@@ -17,7 +17,7 @@ const uploadFileRule = Joi.object({
 });
 
 const searchUserNameRule = Joi.object({
-    username: Joi.string().min(3).max(255).required().messages({
+    username: Joi.string().min(1).max(255).required().messages({
       '*': validationErrorMessages.userName
     }),
 });

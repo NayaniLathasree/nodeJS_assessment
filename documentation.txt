@@ -48,7 +48,9 @@ Task 2:
     "day": "Friday",
     "time": "15:30"
     }'
+
     Description : 
     * Takes a message with a day (e.g. Monday, Friday) and time (HH:mm).
+    * Day format should be 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
     * Stores it in DB.
     * Scheduled task (via node-cron or custom logic) checks DB and triggers the message at the right time.

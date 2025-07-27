@@ -1,11 +1,14 @@
 const path = require('path');
 const Boom = require('@hapi/boom');
+const mongoose = require('mongoose'); 
 const { Worker } = require('worker_threads');
 const { uploadFileRule, searchUserNameRule, getAggregatedPoliciesRule, scheduledMessageRule } = require('./rule');
 const { sendBoomError, sendResponse } = require('../utils/helpers');
 const User = require('../models/user');
 const Policy = require('../models/policy');
 const dbQuery = require('./db');
+const {strings} = require('../config/constant')
+
 const ScheduledMessage = require('../models/scheduledMessage');
 
 const uploadFile = async (req, res, next) => {
@@ -24,20 +27,18 @@ const uploadFile = async (req, res, next) => {
     });
     worker.on('message', (data) => {
       if (data.success) {
-        return res.status(200).json({ message: 'File processed successfully!' });
+        return sendResponse(res, { message: strings.processingSuccess}, 200, true);
       } else {
-        return res.status(400).json({ error: 'Processing failed', message: data.message });
+         return sendResponse(res, { message: strings.processingFailed}, 422, false);
       }
     });
-    worker.on('error', err => res.status(500).json({ error: err.message }));
+    worker.on('error', err =>  sendResponse(res, { message: err.message}, 500, false));
     worker.on('exit', (code) => {
       if (code !== 0) {
-        console.error(`Worker stopped with exit code ${code}`);
-        return res.status(500).json({ error: 'Worker thread exited unexpectedly.' });
+          return sendResponse(res, { message: strings.processingExit}, 500, false);
       }
     });
   } catch (error) {
-
     next(error);
   }
 };
@@ -46,33 +47,55 @@ const uploadFile = async (req, res, next) => {
 const getPolicyByUsername = async (req, res, next) => {
   try {
     const { username } = req.query;
-    const { error } = searchUserNameRule.validate({ username: username });
+
+    const { error } = searchUserNameRule.validate({ username });
     if (error) {
       return sendBoomError(res, Boom.badRequest(error.details[0].message));
     }
-    const user = await User.findOne({ firstName: username });
-    if (!user) return sendResponse(res, { message: 'User not found' }, 404, false);
-    const policies = await Policy.find({ userId: user._id });
-    sendResponse(res, policies, 200, true)
+
+    const users = await User.find({ firstName: new RegExp(`^${username}`, 'i') });
+    if (!users || users.length === 0) {
+      return sendResponse(res, { message: strings.userNotFound }, 404, false);
+    }
+
+    const userIds = users.map((u) => u._id);
+     const policies = await Policy.find({ userId: { $in: userIds } })
+      .populate({ path: 'userId', select: 'firstName email' })
+      .lean(); 
+      const result = policies.map(p => ({
+      ...p,
+      firstName: p.userId?.firstName || null,
+      email: p.userId?.email || null,
+      userId: p.userId?._id || null,
+    }));
+    if (!policies || policies.length === 0) {
+      return sendResponse(res, { message: strings.policyNotFound }, 404, false);
+    }
+
+    return sendResponse(res, result, 200, true);
   } catch (error) {
     next(error);
-    
   }
 };
 
 const getAggregatedPolicies = async (req, res, next) => {
   try {
-    const userId = "6884ab4e48913c0f2123573d"
-
+    const {userId} = req.query; // login userId take from req.USER.Id
     const { error } = getAggregatedPoliciesRule.validate({ userId: userId });
     if (error) {
       return sendBoomError(res, Boom.badRequest(error.details[0].message));
     }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+         return sendResponse(res, { message: strings.invalidUserId}, 400, false);
+    }
+    const users = await User.findOne({ _id: userId });
+    if (!users || users.length === 0) {
+      return sendResponse(res, { message: strings.userNotFound }, 404, false);
+    }
     const result = await dbQuery.policiesAggregation(userId)
     sendResponse(res, result, 200, true)
   } catch (error) {
-    throw error
-    next(error)
+    next(error);
   }
 
 };
@@ -87,7 +110,7 @@ const scheduledMessage = async (req, res) => {
     const newMessage = new ScheduledMessage({ message, day, time });
     await newMessage.save();
     sendResponse(res, {
-      message: 'Message scheduled successfully'
+      message: strings.messageSchedule
     }, 200, true)
   } catch (error) {
     next(error);
